@@ -1,0 +1,12 @@
+# Only here to build the final purge fix on Linux in this fork. Not part of the fix.
+name: Linux build of the final purge fix
+on:
+  push:
+    branches: [ci/final-purge-linux]
+jobs:
+  linux:
+    uses: ./.github/workflows/build_check_cache.yml
+    with:
+      os: ubuntu-24.04
+      build-deps-only: false
+    secrets: inherit
