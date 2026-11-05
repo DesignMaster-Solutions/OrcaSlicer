@@ -1,0 +1,12 @@
+# Only here to build the same source as fix/final-purge-lift WITHOUT the fix, for an A/B of the G-code. Fork only.
+name: Linux build of the baseline for the final purge A/B
+on:
+  push:
+    branches: [ci/main-baseline-linux]
+jobs:
+  linux:
+    uses: ./.github/workflows/build_check_cache.yml
+    with:
+      os: ubuntu-24.04
+      build-deps-only: false
+    secrets: inherit
