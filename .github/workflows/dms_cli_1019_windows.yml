@@ -1,0 +1,12 @@
+# Only here to build the #1019 CLI thumbnail fix in this fork. Not part of the fix.
+name: Windows build of the CLI fix for export-3mf thumbnail crash
+on:
+  push:
+    branches: [ci/cli-1019-windows]
+jobs:
+  windows:
+    uses: ./.github/workflows/build_check_cache.yml
+    with:
+      os: windows-2022
+      build-deps-only: false
+    secrets: inherit
