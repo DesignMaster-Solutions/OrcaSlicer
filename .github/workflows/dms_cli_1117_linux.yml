@@ -1,12 +1,12 @@
-# Only here to build the #1117 CLI fix on Linux in this fork. Not part of the fix.
-name: Linux build of the CLI fix for 3mf without project settings
+# Only here to build the #1117 CLI fix in this fork (Linux build done in run 44536874752). Not part of the fix.
+name: Windows build of the CLI fix for 3mf without project settings
 on:
   push:
     branches: [ci/cli-1117-linux]
 jobs:
-  linux:
+  windows:
     uses: ./.github/workflows/build_check_cache.yml
     with:
-      os: ubuntu-24.04
+      os: windows-2022
       build-deps-only: false
     secrets: inherit
