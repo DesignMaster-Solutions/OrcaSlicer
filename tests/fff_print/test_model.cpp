@@ -1,4 +1,5 @@
 #include <catch2/catch_test_macros.hpp>
+#include <catch2/catch_approx.hpp>
 
 #include "libslic3r/libslic3r.h"
 #include "libslic3r/Model.hpp"
@@ -59,4 +60,25 @@ SCENARIO("Model construction", "[Model]") {
 			}
         }
     }
+}
+
+TEST_CASE("ensure_on_bed leaves an instance with Auto-Drop off at its Z", "[Model][AutoDrop]") {
+    Model model;
+    ModelObject *object = model.add_object();
+    object->add_volume(make_cube(20, 20, 20));
+    ModelInstance *dropped = object->add_instance();
+    ModelInstance *kept    = object->add_instance();
+    dropped->set_offset(Vec3d(0., 0., 10.));
+    kept->set_offset(Vec3d(50., 0., 10.));
+
+    REQUIRE(dropped->auto_drop); // a new instance snaps to the plate, as before
+    kept->auto_drop = false;
+
+    object->ensure_on_bed();
+
+    CHECK(dropped->get_offset().z() == Catch::Approx(0.));
+    CHECK(kept->get_offset().z() == Catch::Approx(10.));
+
+    ModelInstance *copy = object->add_instance(*kept);
+    CHECK_FALSE(copy->auto_drop); // the flag survives copying the instance
 }
