@@ -637,6 +637,11 @@ bool GLGizmosManager::on_mouse_wheel(const wxMouseEvent &evt)
 {
     bool processed = false;
 
+    // Orca: only a vertical wheel event with a direction is a step. A tilt wheel or a trackpad also sends
+    // horizontal events, and a macOS trackpad sends events with a rotation of 0 (port of OrcaSlicer#17926).
+    if (evt.GetWheelAxis() != wxMOUSE_WHEEL_VERTICAL || evt.GetWheelRotation() == 0)
+        return false;
+
     if (/*m_current == SlaSupports || m_current == Hollow ||*/ m_current == FdmSupports || m_current == Seam || m_current == MmSegmentation || m_current == FuzzySkin || m_current == BrimEars) {
         float rot = (float)evt.GetWheelRotation() / (float)evt.GetWheelDelta();
         if (gizmo_event((rot > 0.f ? SLAGizmoEventType::MouseWheelUp : SLAGizmoEventType::MouseWheelDown), Vec2d::Zero(), evt.ShiftDown(), evt.AltDown()
