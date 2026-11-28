@@ -163,3 +163,59 @@ SCENARIO("Wipe tower with fully defined adhesiveness categories", "[WipeTower]")
         }
     }
 }
+
+// Print by object turns the shared prime tower off when the plate has more than one thing to
+// print. Two copies of one multi-filament object are one PrintObject with two instances, so
+// counting objects left the tower on and slicing failed with "Wipe tower generation failed".
+// Port of upstream OrcaSlicer #17918.
+TEST_CASE("The prime tower follows the number of printable copies in a sequential print", "[WipeTower][Regression]")
+{
+    DynamicPrintConfig config = Test::default_print_config();
+    config.set_deserialize_strict({
+        { "nozzle_diameter", "0.4,0.4" },
+        { "filament_diameter", "1.75,1.75" },
+        { "filament_type", "PLA,PLA" },
+        { "flush_volumes_matrix", "0,140,140,0" },
+        { "enable_prime_tower", true },
+        { "print_sequence", "by object" },
+        { "timelapse_type", 0 },
+        { "machine_start_gcode", "" },
+        { "layer_change_gcode", "G92 E0" }
+    });
+
+    Model model;
+    ModelObject *object = model.add_object();
+    object->name = "two_filament_block.stl";
+    object->add_volume(make_cube(10., 10., 10.))->config.set("extruder", 1);
+    ModelVolume *second = object->add_volume(make_cube(10., 10., 10.));
+    second->config.set("extruder", 2);
+    second->set_offset(Vec3d(10., 0., 0.));
+    object->add_instance()->set_offset(Vec3d(50., 50., 0.));
+    ModelInstance *copy = object->add_instance();
+    copy->set_offset(Vec3d(120., 50., 0.));
+    object->ensure_on_bed();
+
+    Print print;
+    print.set_status_silent();
+    print.is_BBL_printer() = false;
+    print.apply(model, config);
+    REQUIRE(print.objects().size() == 1);
+    REQUIRE(print.num_object_instances() == 2);
+    REQUIRE(print.extruders().size() == 2);
+    CHECK_FALSE(print.has_wipe_tower());
+
+    // The first normalize_fdm_2 pass still sees the previous instances, and the second one only turns
+    // keys off, so the tower comes back on the next apply. Same lag as with objects().size() before;
+    // upstream fixed it separately with the unnormalized config compare, not in this fork.
+    copy->printable = false;
+    print.apply(model, config);
+    print.apply(model, config);
+    REQUIRE(print.num_object_instances() == 1);
+    CHECK(print.has_wipe_tower());
+
+    copy->printable = true;
+    config.set_deserialize_strict("print_sequence", "by layer");
+    print.apply(model, config);
+    REQUIRE(print.num_object_instances() == 2);
+    CHECK(print.has_wipe_tower());
+}
